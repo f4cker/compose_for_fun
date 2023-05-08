@@ -1,6 +1,4 @@
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -8,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -20,25 +17,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
-@OptIn(ExperimentalResourceApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun App() {
     MaterialTheme {
         var greetingText by remember { mutableStateOf("Hello, World!") }
         var showImage by remember { mutableStateOf(false) }
-        var selectedIndex by remember { mutableStateOf(0) }
+        var selection by remember { mutableStateOf(StyleReference.IMAGE) }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Button(onClick = {
                 greetingText = "Hello, ${getPlatformName()}"
                 showImage = !showImage
             }) {
-                Text("$selectedIndex")
+                Text(selection.value)
             }
             AnimatedVisibility(showImage) {
                 Image(
@@ -46,13 +44,31 @@ fun App() {
                     null
                 )
             }
-            SegControl(mutableListOf("Upload Image", "AI Template"), modifier = Modifier.width(250.dp).height(30.dp).background(
-                Color.Gray, RoundedCornerShape(20.dp)
-            )) { index, str ->
-
+            SegControl(
+                options = StyleReference.values(),
+                segColor = MaterialTheme.colors.surface,
+                modifier = Modifier.width(250.dp)
+                    .height(30.dp)
+                    .background(Color.Gray, RoundedCornerShape(20.dp)),
+                onValueChange = { selection = it }
+            ) { _, style ->
+                val color = if (style == selection) MaterialTheme.colors.primary else MaterialTheme.colors.primaryVariant
+                Text(style.value,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    fontSize= 12.sp,
+                    style = TextStyle(color = color),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
+}
+
+enum class StyleReference(val value: String) {
+    IMAGE("Upload Image"),
+    TEMPLATE("AI Template"),
+    DEFAULT("Default")
 }
 
 expect fun getPlatformName(): String

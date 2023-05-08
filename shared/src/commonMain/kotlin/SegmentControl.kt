@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 inline fun <T> SegControl(
-    options: MutableList<T>,
+    options: Array<T>,
     cornerRadius: Dp = 20.dp,
     segColor: Color = Color.Black,
     padding: Dp = 2.dp,
