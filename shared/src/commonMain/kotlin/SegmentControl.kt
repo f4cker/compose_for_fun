@@ -36,37 +36,38 @@ inline fun <T> SegControl(
     crossinline content: @Composable (Int, T) -> Unit
 ) {
     val parentSize = remember { mutableStateOf(IntSize.Zero) }
-    val offsetX = remember { mutableStateOf(0.dp) }
+    val offsetX = remember { mutableStateOf(padding) }
     val translationX by animateDpAsState(
         targetValue = offsetX.value,
         animationSpec = tween(durationMillis = 500)
     )
     val interactionSource = remember { MutableInteractionSource() }
-
+    val paddingSize = with(LocalDensity.current) {
+        padding.toPx().toInt()
+    }
     Box(
-        modifier = modifier.layout { measurable, constraints ->
+        modifier = modifier.padding(padding).layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
-            parentSize.value = IntSize(constraints.maxWidth, constraints.maxHeight)
+            parentSize.value = IntSize(constraints.maxWidth - paddingSize * 2, constraints.maxHeight - paddingSize * 2)
             layout(placeable.width, placeable.height) {
                 placeable.place(0, 0)
             }
         },
     ) {
-        val itemWidth = with(LocalDensity.current) {
-            (parentSize.value.width / options.size).toDp()
-        }
-        val itemHeight = with(LocalDensity.current) {
-            parentSize.value.height.toDp()
-        }
         val parentWidthDp = with(LocalDensity.current) {
             parentSize.value.width.toDp()
         }
-        Row(modifier = Modifier
-            .offset(translationX, 0.dp)
-            .padding(padding)
-            .background(segColor, RoundedCornerShape(cornerRadius))
-            .width(itemWidth)
-            .height(itemHeight)
+        val itemWidth = parentWidthDp / options.size - padding
+        val itemHeight = with(LocalDensity.current) {
+            parentSize.value.height.toDp()
+        }
+        Row(
+            modifier = Modifier
+                .offset(translationX, padding)
+                .background(segColor, RoundedCornerShape(cornerRadius))
+                .width(itemWidth)
+                .height(itemHeight),
+            verticalAlignment = Alignment.CenterVertically
         ) {}
         Row {
             options.forEachIndexed { index, option ->
@@ -77,10 +78,19 @@ inline fun <T> SegControl(
                         .height(itemHeight)
                         .align(Alignment.CenterVertically)
                         .clickable(onClick = {
-                            if (index == options.size - 1) {
-                                offsetX.value = parentWidthDp.minus(padding * 2).minus(itemWidth)
-                            } else {
-                                offsetX.value = itemWidth.times(index)
+                            when (index) {
+                                0 -> {
+                                    offsetX.value = padding
+                                    println("this is option: $option & offsetX: $offsetX")
+                                }
+//                                options.size - 1 -> {
+//                                    offsetX.value = parentWidthDp.minus(itemWidth) +  padding * (index + 1)
+//                                    println("this is last option: $option & offsetX: $offsetX")
+//                                }
+                                else -> {
+                                    offsetX.value = itemWidth.times(index) + padding * (index + 1)
+                                    println("this is else option: $option & offsetX: $offsetX")
+                                }
                             }
                             onValueChange(option)
                         }, indication = null, interactionSource = interactionSource),
